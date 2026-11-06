@@ -1,4 +1,4 @@
-import { OrderCard } from "../components/order-card";
+import OrderCard from "../components/order-card";
 import { sampleOrders } from "../data/sample-orders";
 
 export default function OrdersPage() {

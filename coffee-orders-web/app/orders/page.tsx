@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import OrderCard from "../components/order-card";
+import { OrdersSummary } from "../components/OrdersSummary";
 import type { OrderSummary} from "../types/order-summary";
 
 
@@ -36,11 +37,18 @@ export default async function OrdersPage() {
       {orders === null && <p role="alert">No se pudieron consultar los pedidos.</p>}
       {orders?.length === 0 && <p>Todavía no hay pedidos.</p>}
       {orders && orders.length > 0 && (
-        <section className="orders-grid" aria-label="Listado de pedidos">
+        <>
+          <OrdersSummary
+            total={orders.length}
+            pending={orders.filter((order) => order.status === "pending").length}
+            ready={orders.filter((order) => order.status === "ready").length}
+          />
+          <section className="orders-grid" aria-label="Listado de pedidos">
           {orders.map(({ id, item, quantity, status }) => (
             <OrderCard key={id} order={{ id, item, quantity, status }} />
           ))}
-        </section>
+          </section>
+        </>
       )}
     </main>
   );
