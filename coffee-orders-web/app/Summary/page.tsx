@@ -1,5 +1,5 @@
-import { OrderCard } from "../components/order-card";
 import { sampleOrders } from "../data/sample-orders";
+import OrderCard from "../components/order-card";
 
 export default function OrdersPage() {
   return (

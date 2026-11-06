@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 export const instant = false;
 
 async function login(formData: FormData) {
@@ -59,6 +60,9 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         </p>
         <button type="submit">Entrar</button>
       </form>
+            <p>
+        ¿No tienes cuenta? <Link href="/register">Crear cuenta</Link>
+      </p>
     </main>
   );
 }
