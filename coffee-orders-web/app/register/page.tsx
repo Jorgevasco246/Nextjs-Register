@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-export const instant = false;
 
 async function register(formData: FormData) {
   "use server";

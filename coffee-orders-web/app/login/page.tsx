@@ -1,7 +1,6 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-export const instant = false;
 
 async function login(formData: FormData) {
   "use server";

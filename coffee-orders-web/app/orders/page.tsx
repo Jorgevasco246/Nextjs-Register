@@ -1,8 +1,9 @@
+import Link from "next/link";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import OrderCard from "../components/order-card";
-import type { OrderSummary} from "../types/order-summary";
-
+import RefreshOrders from "../components/refresh-orders/refresh-orders";
+import type { OrderSummary } from "../types/order-summary";
 
 async function logout() {
   "use server";
@@ -11,13 +12,23 @@ async function logout() {
   redirect("/login");
 }
 
-export default async function OrdersPage() {
+type OrdersPageProps = {
+  searchParams: Promise<{ status?: string | string[] }>;
+};
+
+export default async function OrdersPage({ searchParams }: OrdersPageProps) {
   const cookieStore = await cookies();
   const token = cookieStore.get("coffee_token")?.value;
   if (!token) redirect("/login");
 
-  const response = await fetch(`${process.env.COFFEE_API_URL}/orders`, {
-    headers: { Authorization: `Bearer ${token}`},
+  const { status } = await searchParams;
+  const selectedStatus = status === "pending" || status === "ready" ? status : undefined;
+  const endpoint = selectedStatus
+    ? `/orders/search?status=${selectedStatus}&limit=20`
+    : "/orders";
+
+  const response = await fetch(`${process.env.COFFEE_API_URL}${endpoint}`, {
+    headers: { Authorization: `Bearer ${token}` },
     cache: "no-store",
   }).catch(() => null);
 
@@ -33,8 +44,26 @@ export default async function OrdersPage() {
         <button type="submit">Cerrar sesión</button>
       </form>
 
+      <p>
+        <Link href="/orders/new">Nuevo pedido</Link>
+      </p>
+
+      <nav aria-label="Filtrar pedidos">
+        <Link href="/orders" aria-current={!selectedStatus ? "page" : undefined}>
+          Todos
+        </Link>
+        <Link href="/orders?status=pending" aria-current={selectedStatus === "pending" ? "page" : undefined}>
+          Pendientes
+        </Link>
+        <Link href="/orders?status=ready" aria-current={selectedStatus === "ready" ? "page" : undefined}>
+          Listos
+        </Link>
+      </nav>
+      <RefreshOrders />
+      {selectedStatus && <p>Hasta 20 pedidos para este filtro.</p>}
+
       {orders === null && <p role="alert">No se pudieron consultar los pedidos.</p>}
-      {orders?.length === 0 && <p>Todavía no hay pedidos.</p>}
+      {orders?.length === 0 && <p>No hay pedidos para mostrar.</p>}
       {orders && orders.length > 0 && (
         <section className="orders-grid" aria-label="Listado de pedidos">
           {orders.map(({ id, item, quantity, status }) => (
