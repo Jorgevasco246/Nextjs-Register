@@ -17,7 +17,7 @@ export default async function OrdersPage() {
   if (!token) redirect("/login");
 
   const response = await fetch(`${process.env.COFFEE_API_URL}/orders`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: { Authorization: `Bearer ${token}`},
     cache: "no-store",
   }).catch(() => null);
 
