@@ -1,47 +1,69 @@
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
 import OrderCard from "../components/order-card";
-import type { OrderSummary} from "../types/order-summary";
+import { redirect } from "next/dist/client/components/navigation";
+import { cookies } from "next/dist/server/request/cookies";
+import RefreshOrders from "../components/refresh-orders/refresh-orders";
+import Link from "next/link";
 
+type OrdersPageProps = {
+  searchParams: Promise<{ status?: string | string[] }>;
+};
 
-async function logout() {
-  "use server";
-  const cookieStore = await cookies();
-  cookieStore.delete("coffee_token");
-  redirect("/login");
-}
-
-export default async function OrdersPage() {
+export default async function OrdersPage({ searchParams }: OrdersPageProps) {
+  
   const cookieStore = await cookies();
   const token = cookieStore.get("coffee_token")?.value;
   if (!token) redirect("/login");
 
-  const response = await fetch(`${process.env.COFFEE_API_URL}/orders`, {
-    headers: { Authorization: `Bearer ${token}`},
+  //Aquí es donde filtramos usando los query params de la URL
+  const { status } = await searchParams; //De aquí tomar el valor de la URL
+  console.log(status)
+  const selectedStatus = Array.isArray(status) ? status : status ? [status] : []
+  const validStatuses = selectedStatus.filter((s) => s === "pending" || s === "ready");
+  
+  const params = new URLSearchParams();
+  validStatuses.forEach((s) => {
+    params.append("status", s)
+  })
+
+  const endpointURL = selectedStatus
+    ? `/orders/search?${params.toString()}&limit=20`
+    : "/orders";
+  
+  const response = await fetch(`${process.env.COFFEE_API_URL}${endpointURL}`, {
+    headers: { Authorization: `Bearer ${token}` },
     cache: "no-store",
   }).catch(() => null);
 
   if (response?.status === 401) redirect("/login");
 
   const data = response?.ok ? await response.json().catch(() => null) : null;
-  const orders: OrderSummary[] | null = Array.isArray(data) ? data : null;
-
+  const ordersApi = Array.isArray(data) ? data : null;
+  
   return (
     <main>
       <h1>Pedidos</h1>
-      <form action={logout}>
-        <button type="submit">Cerrar sesión</button>
-      </form>
+      <nav aria-label="Filtrar pedidos">
+        <Link href="/orders" aria-current={!selectedStatus ? "page" : undefined}>
+          Todos
+        </Link>
+        <Link href="/orders?status=pending">
+          Pendientes
+        </Link>
+        <Link href="/orders?status=ready">
+          Listos
+        </Link>
+      </nav>
 
-      {orders === null && <p role="alert">No se pudieron consultar los pedidos.</p>}
-      {orders?.length === 0 && <p>Todavía no hay pedidos.</p>}
-      {orders && orders.length > 0 && (
-        <section className="orders-grid" aria-label="Listado de pedidos">
-          {orders.map(({ id, item, quantity, status }) => (
-            <OrderCard key={id} order={{ id, item, quantity, status }} />
-          ))}
-        </section>
-      )}
+      <RefreshOrders  />
+
+      <section className="orders-grid" aria-label="Listado de pedidos">
+  {ordersApi?.map((order) => (
+    <div key={order.id}>
+      <OrderCard order={order} />
+      <Link href={`/orders/${order.id}/edit`}>Editar</Link>
+    </div>
+  ))}
+</section>
     </main>
   );
 }

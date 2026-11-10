@@ -7,6 +7,7 @@ export const AppHeader = () => {
       <nav aria-label="Navegación principal">
         <Link href="/orders">Inicio</Link>
         <Link href="/">Pedidos</Link>
+        <Link href="/orders/new">Nuevo Pedido</Link>
       </nav>
     </header>
   );
